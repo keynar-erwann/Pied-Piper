@@ -1,0 +1,93 @@
+Metadata-Version: 2.4
+Name: livekit-agents
+Version: 1.0.11
+Summary: A powerful framework for building realtime voice AI agents
+Project-URL: Documentation, https://docs.livekit.io
+Project-URL: Website, https://livekit.io/
+Project-URL: Source, https://github.com/livekit/agents
+Author-email: LiveKit <hello@livekit.io>
+License-Expression: Apache-2.0
+Keywords: AI,agents,audio,livekit,realtime,video,webrtc
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Topic :: Multimedia :: Sound/Audio
+Classifier: Topic :: Multimedia :: Video
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Requires-Python: >=3.9
+Requires-Dist: aiohttp~=3.10
+Requires-Dist: av>=12.0.0
+Requires-Dist: click~=8.1
+Requires-Dist: colorama>=0.4.6
+Requires-Dist: docstring-parser>=0.16
+Requires-Dist: eval-type-backport
+Requires-Dist: livekit-api<2,>=1.0.2
+Requires-Dist: livekit-protocol~=1.0
+Requires-Dist: livekit<2,>=1.0.3
+Requires-Dist: nest-asyncio>=1.6.0
+Requires-Dist: numpy>=1.26.0
+Requires-Dist: protobuf>=3
+Requires-Dist: psutil>=7.0
+Requires-Dist: pydantic<3,>=2.0
+Requires-Dist: pyjwt>=2.0
+Requires-Dist: sounddevice>=0.5
+Requires-Dist: types-protobuf<5,>=4
+Requires-Dist: typing-extensions>=4.12
+Requires-Dist: watchfiles>=1.0
+Provides-Extra: anthropic
+Requires-Dist: livekit-plugins-anthropic>=1.0.11; extra == 'anthropic'
+Provides-Extra: assemblyai
+Requires-Dist: livekit-plugins-assemblyai>=1.0.11; extra == 'assemblyai'
+Provides-Extra: aws
+Requires-Dist: livekit-plugins-aws>=1.0.11; extra == 'aws'
+Provides-Extra: azure
+Requires-Dist: livekit-plugins-azure>=1.0.11; extra == 'azure'
+Provides-Extra: cartesia
+Requires-Dist: livekit-plugins-cartesia>=1.0.11; extra == 'cartesia'
+Provides-Extra: clova
+Requires-Dist: livekit-plugins-clova>=1.0.11; extra == 'clova'
+Provides-Extra: codecs
+Requires-Dist: av>=12.0.0; extra == 'codecs'
+Requires-Dist: numpy>=1.26.0; extra == 'codecs'
+Provides-Extra: deepgram
+Requires-Dist: livekit-plugins-deepgram>=1.0.11; extra == 'deepgram'
+Provides-Extra: elevenlabs
+Requires-Dist: livekit-plugins-elevenlabs>=1.0.11; extra == 'elevenlabs'
+Provides-Extra: fal
+Requires-Dist: livekit-plugins-fal>=1.0.11; extra == 'fal'
+Provides-Extra: gladia
+Requires-Dist: livekit-plugins-gladia>=1.0.11; extra == 'gladia'
+Provides-Extra: google
+Requires-Dist: livekit-plugins-google>=1.0.11; extra == 'google'
+Provides-Extra: groq
+Requires-Dist: livekit-plugins-groq>=1.0.11; extra == 'groq'
+Provides-Extra: images
+Requires-Dist: pillow>=10.3.0; extra == 'images'
+Provides-Extra: neuphonic
+Requires-Dist: livekit-plugins-neuphonic>=1.0.11; extra == 'neuphonic'
+Provides-Extra: nltk
+Requires-Dist: livekit-plugins-nltk>=1.0.11; extra == 'nltk'
+Provides-Extra: openai
+Requires-Dist: livekit-plugins-openai>=1.0.11; extra == 'openai'
+Provides-Extra: playai
+Requires-Dist: livekit-plugins-playai>=1.0.11; extra == 'playai'
+Provides-Extra: rag
+Requires-Dist: livekit-plugins-rag>=1.0.11; extra == 'rag'
+Provides-Extra: resemble
+Requires-Dist: livekit-plugins-resemble>=1.0.11; extra == 'resemble'
+Provides-Extra: rime
+Requires-Dist: livekit-plugins-rime>=1.0.11; extra == 'rime'
+Provides-Extra: silero
+Requires-Dist: livekit-plugins-silero>=1.0.11; extra == 'silero'
+Provides-Extra: speechmatics
+Requires-Dist: livekit-plugins-speechmatics>=1.0.11; extra == 'speechmatics'
+Provides-Extra: turn-detector
+Requires-Dist: livekit-plugins-turn-detector>=1.0.11; extra == 'turn-detector'
+Description-Content-Type: text/markdown
+
+# LiveKit Agents
+
+The core LiveKit Agents Framework. See top-level README for more information.
