@@ -34,7 +34,9 @@ export function VoiceInterface({ isOpen, onClose }: VoiceInterfaceProps) {
   const [textInput, setTextInput] = useState("");
   const [showTextInput, setShowTextInput] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [isListeningForVoice, setIsListeningForVoice] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
   
   const {
     isConnected,
@@ -101,16 +103,125 @@ export function VoiceInterface({ isOpen, onClose }: VoiceInterfaceProps) {
     }
   }, [messages]);
 
+  // Initialize speech recognition
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang = 'en-US';
+      
+      recognitionRef.current.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        console.log('Voice input:', transcript);
+        
+        // Add user message immediately
+        const userMessage: Message = {
+          id: Date.now().toString(),
+          sender: 'user',
+          content: transcript,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, userMessage]);
+        
+        // Generate response
+        setTimeout(() => {
+          const response = generatePiedPiperResponse(transcript);
+          const aiMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            sender: 'ai',
+            content: response,
+            timestamp: new Date()
+          };
+          
+          setMessages(prev => [...prev, aiMessage]);
+          speakMessage(response);
+        }, 1000);
+      };
+      
+      recognitionRef.current.onend = () => {
+        setIsListeningForVoice(false);
+        setIsRecording(false);
+      };
+      
+      recognitionRef.current.onerror = (event: any) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListeningForVoice(false);
+        setIsRecording(false);
+      };
+    }
+  }, []);
+
   const handleVoiceToggle = async () => {
-    if (isRecording) {
-      await stopRecording();
+    if (isListeningForVoice) {
+      // Stop voice recognition
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setIsListeningForVoice(false);
       setIsRecording(false);
     } else {
-      const success = await startRecording();
-      if (success) {
-        setIsRecording(true);
+      // Start voice recognition
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.start();
+          setIsListeningForVoice(true);
+          setIsRecording(true);
+        } catch (error) {
+          console.error('Error starting speech recognition:', error);
+        }
+      } else {
+        // Fallback to LiveKit recording if speech recognition not available
+        const success = await startRecording();
+        if (success) {
+          setIsRecording(true);
+        }
       }
     }
+  };
+
+  const speakMessage = (text: string) => {
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.9;
+      utterance.pitch = 1.1;
+      utterance.volume = 0.8;
+      
+      const voices = speechSynthesis.getVoices();
+      const preferredVoice = voices.find(voice => 
+        voice.name.includes('Google') || 
+        voice.name.includes('Enhanced') ||
+        voice.lang.startsWith('en')
+      );
+      if (preferredVoice) {
+        utterance.voice = preferredVoice;
+      }
+      
+      speechSynthesis.speak(utterance);
+    }
+  };
+
+  const generatePiedPiperResponse = (userMessage: string): string => {
+    const musicKeywords = ['song', 'music', 'artist', 'band', 'album', 'track', 'listen', 'play'];
+    const hasMusic = musicKeywords.some(keyword => 
+      userMessage.toLowerCase().includes(keyword)
+    );
+
+    if (hasMusic) {
+      return "That's a great question about music! I'd love to help you discover more about that. While I'm connecting to my full music search capabilities, I can tell you that I specialize in finding song information, lyrics, and music recommendations. What specific artist or song are you curious about?";
+    }
+
+    if (userMessage.toLowerCase().includes('hello') || userMessage.toLowerCase().includes('hi')) {
+      return "Hello there! I'm excited to chat with you about music. I can help you discover new songs, find lyrics, learn about artists, and much more. What's your favorite type of music?";
+    }
+
+    if (userMessage.toLowerCase().includes('language')) {
+      return "I can speak multiple languages including English, Spanish, French, German, Italian, and Hindi! Just ask me to switch to any of these languages and I'll be happy to chat with you in your preferred language.";
+    }
+
+    return "That's interesting! I'm Pied Piper, your AI music companion. I love talking about all things music - from discovering new artists to exploring different genres. What kind of music makes you feel alive?";
   };
 
   const handleSendTextMessage = async () => {
@@ -124,10 +235,31 @@ export function VoiceInterface({ isOpen, onClose }: VoiceInterfaceProps) {
     };
 
     setMessages(prev => [...prev, userMessage]);
-    
-    // Send to LiveKit
-    await sendMessage(textInput);
+    const messageText = textInput;
     setTextInput("");
+    
+    // Try to send to LiveKit if connected
+    if (isConnected) {
+      await sendMessage(messageText);
+    }
+    
+    // Generate and display Pied Piper's response
+    setTimeout(() => {
+      const response = generatePiedPiperResponse(messageText);
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        sender: 'ai',
+        content: response,
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
+      
+      // Speak the response
+      setTimeout(() => {
+        speakMessage(response);
+      }, 300);
+    }, 1000); // Simulate thinking time
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -211,7 +343,7 @@ export function VoiceInterface({ isOpen, onClose }: VoiceInterfaceProps) {
         <div className="p-6 border-t border-slate-700">
           {/* Audio Visualizer */}
           <div className="flex justify-center items-center mb-4 h-16">
-            <AudioVisualizer isActive={isRecording || isListening} />
+            <AudioVisualizer isActive={isRecording || isListening || isListeningForVoice} />
           </div>
 
           {/* Input Options */}
