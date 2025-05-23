@@ -96,16 +96,10 @@ export default function Home() {
             </div>
           </div>
           
-          {/* Language Selector */}
-          <div className="relative">
-            <select className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 transition-all duration-200">
-              <option value="en">🇺🇸 English</option>
-              <option value="es">🇪🇸 Español</option>
-              <option value="fr">🇫🇷 Français</option>
-              <option value="de">🇩🇪 Deutsch</option>
-              <option value="it">🇮🇹 Italiano</option>
-              <option value="hi">🇮🇳 हिंदी</option>
-            </select>
+          <div className="flex items-center space-x-2">
+            <Badge variant="secondary" className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-full px-3 py-1">
+              <span className="text-xs font-mono text-slate-400">AI Music Companion</span>
+            </Badge>
           </div>
         </nav>
       </header>
@@ -136,11 +130,8 @@ export default function Home() {
               </span>
             </h1>
             
-            <p className="text-xl md:text-2xl text-slate-400 mb-4 font-light">
-              making the world a better place...
-            </p>
-            <p className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-emerald-500 to-blue-500 bg-clip-text text-transparent mb-12">
-              through sound
+            <p className="text-xl md:text-2xl text-slate-400 mb-12 font-light">
+              making the world a better place through sound
             </p>
 
             {/* CTA Button */}
@@ -197,46 +188,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Tech Stack Section */}
-        <section className="py-20 px-6 border-t border-slate-800">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-2xl md:text-3xl font-bold mb-8">
-              <span className="bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
-                Built with Modern Tech
-              </span>
-            </h2>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div className="flex flex-col items-center space-y-2 group">
-                <div className="w-16 h-16 bg-slate-800 rounded-xl flex items-center justify-center group-hover:bg-slate-700 transition-colors">
-                  <span className="text-2xl">🐍</span>
-                </div>
-                <span className="text-sm font-mono text-slate-400">Python</span>
-              </div>
-              
-              <div className="flex flex-col items-center space-y-2 group">
-                <div className="w-16 h-16 bg-slate-800 rounded-xl flex items-center justify-center group-hover:bg-slate-700 transition-colors">
-                  <Mic className="text-2xl text-blue-500" />
-                </div>
-                <span className="text-sm font-mono text-slate-400">LiveKit</span>
-              </div>
-              
-              <div className="flex flex-col items-center space-y-2 group">
-                <div className="w-16 h-16 bg-slate-800 rounded-xl flex items-center justify-center group-hover:bg-slate-700 transition-colors">
-                  <span className="text-2xl">🤖</span>
-                </div>
-                <span className="text-sm font-mono text-slate-400">AI/ML</span>
-              </div>
-              
-              <div className="flex flex-col items-center space-y-2 group">
-                <div className="w-16 h-16 bg-slate-800 rounded-xl flex items-center justify-center group-hover:bg-slate-700 transition-colors">
-                  <span className="text-2xl">☁️</span>
-                </div>
-                <span className="text-sm font-mono text-slate-400">Cloud APIs</span>
-              </div>
-            </div>
-          </div>
-        </section>
+
       </main>
 
       {/* Footer */}
