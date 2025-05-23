@@ -1,0 +1,138 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 222 84% 4.9%; /* slate-900 */
+  --foreground: 210 40% 98%; /* slate-50 */
+  --muted: 217 32.6% 17.5%; /* slate-800 */
+  --muted-foreground: 215 20.2% 65.1%; /* slate-400 */
+  --popover: 222 84% 4.9%; /* slate-900 */
+  --popover-foreground: 210 40% 98%; /* slate-50 */
+  --card: 222 84% 4.9%; /* slate-900 */
+  --card-foreground: 210 40% 98%; /* slate-50 */
+  --border: 217 32.6% 17.5%; /* slate-800 */
+  --input: 217 32.6% 17.5%; /* slate-800 */
+  --primary: 158 64% 52%; /* emerald-600 */
+  --primary-foreground: 210 40% 98%; /* slate-50 */
+  --secondary: 217 32.6% 17.5%; /* slate-800 */
+  --secondary-foreground: 210 40% 98%; /* slate-50 */
+  --accent: 217 32.6% 17.5%; /* slate-800 */
+  --accent-foreground: 210 40% 98%; /* slate-50 */
+  --destructive: 0 84.2% 60.2%; /* red-500 */
+  --destructive-foreground: 210 40% 98%; /* slate-50 */
+  --ring: 158 64% 52%; /* emerald-600 */
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: 222 84% 4.9%; /* slate-900 */
+  --foreground: 210 40% 98%; /* slate-50 */
+  --muted: 217 32.6% 17.5%; /* slate-800 */
+  --muted-foreground: 215 20.2% 65.1%; /* slate-400 */
+  --popover: 222 84% 4.9%; /* slate-900 */
+  --popover-foreground: 210 40% 98%; /* slate-50 */
+  --card: 222 84% 4.9%; /* slate-900 */
+  --card-foreground: 210 40% 98%; /* slate-50 */
+  --border: 217 32.6% 17.5%; /* slate-800 */
+  --input: 217 32.6% 17.5%; /* slate-800 */
+  --primary: 158 64% 52%; /* emerald-600 */
+  --primary-foreground: 210 40% 98%; /* slate-50 */
+  --secondary: 217 32.6% 17.5%; /* slate-800 */
+  --secondary-foreground: 210 40% 98%; /* slate-50 */
+  --accent: 217 32.6% 17.5%; /* slate-800 */
+  --accent-foreground: 210 40% 98%; /* slate-50 */
+  --destructive: 0 84.2% 60.2%; /* red-500 */
+  --destructive-foreground: 210 40% 98%; /* slate-50 */
+  --ring: 158 64% 52%; /* emerald-600 */
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .animation-delay-300 {
+    animation-delay: 300ms;
+  }
+  
+  .animation-delay-500 {
+    animation-delay: 500ms;
+  }
+  
+  .animation-delay-600 {
+    animation-delay: 600ms;
+  }
+  
+  .animation-delay-1000 {
+    animation-delay: 1000ms;
+  }
+  
+  .animation-delay-2000 {
+    animation-delay: 2000ms;
+  }
+}
+
+/* Custom animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 20px theme('colors.emerald.600');
+  }
+  to {
+    box-shadow: 0 0 30px theme('colors.emerald.500'), 0 0 40px theme('colors.emerald.500');
+  }
+}
+
+@keyframes wave {
+  0%, 100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.5);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+.animate-wave {
+  animation: wave 2s ease-in-out infinite;
+}
+
+/* Scrollbar styling for chat area */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: theme('colors.slate.800');
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: theme('colors.slate.600');
+  border-radius: 2px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: theme('colors.slate.500');
+}
