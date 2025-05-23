@@ -82,7 +82,7 @@ export function useLiveKit() {
       // Connect to room with proper token
       await room.connect(config.url, token, {
         autoSubscribe: true,
-      } as ConnectOptions);
+      } as RoomConnectOptions);
 
       console.log("LiveKit connection established with identity:", identity);
       
@@ -115,7 +115,7 @@ export function useLiveKit() {
       }
 
       // Create local audio track
-      const audioTrack = await LocalAudioTrack.createAudioTrack({
+      const audioTrack = await LocalAudioTrack.create({
         echoCancellation: true,
         noiseSuppression: true,
         autoGainControl: true,
@@ -166,7 +166,7 @@ export function useLiveKit() {
       const encoder = new TextEncoder();
       const data = encoder.encode(message);
       
-      await roomRef.current.localParticipant.publishData(data, "reliable");
+      await roomRef.current.localParticipant.publishData(data, { reliable: true });
       console.log("Sent message:", message);
       
     } catch (error) {
