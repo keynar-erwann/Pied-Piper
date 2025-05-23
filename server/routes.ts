@@ -2,6 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
+import { AccessToken } from "livekit-server-sdk";
+import jwt from "jsonwebtoken";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint
@@ -13,9 +15,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/livekit/config", (req, res) => {
     res.json({
       url: process.env.LIVEKIT_URL || "wss://pied-piper-93l7cg2j.livekit.cloud",
-      apiKey: process.env.LIVEKIT_API_KEY || "API97HnKaUuDx6m",
       roomName: process.env.LIVEKIT_ROOM_NAME || "pipey-room"
     });
+  });
+
+  // Generate LiveKit access token
+  app.post("/api/livekit/token", (req, res) => {
+    try {
+      const apiKey = process.env.LIVEKIT_API_KEY || "API97HnKaUuDx6m";
+      const apiSecret = process.env.LIVEKIT_API_SECRET || "xSJ1PMjNIwmYxKMfje3bv4zbqtyh5j95MZpCxeEKYw2B";
+      const roomName = process.env.LIVEKIT_ROOM_NAME || "pipey-room";
+      
+      // Generate a unique participant identity
+      const participantIdentity = `user_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      
+      // Create access token
+      const token = new AccessToken(apiKey, apiSecret, {
+        identity: participantIdentity,
+        ttl: 60 * 60, // 1 hour
+      });
+
+      // Grant permissions
+      token.addGrant({
+        room: roomName,
+        roomJoin: true,
+        canPublish: true,
+        canSubscribe: true,
+        canPublishData: true,
+      });
+
+      const accessToken = token.toJwt();
+      
+      res.json({
+        token: accessToken,
+        identity: participantIdentity,
+        roomName: roomName
+      });
+      
+    } catch (error) {
+      console.error("Error generating LiveKit token:", error);
+      res.status(500).json({ error: "Failed to generate access token" });
+    }
   });
 
   // Create HTTP server

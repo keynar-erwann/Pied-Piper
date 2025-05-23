@@ -6,7 +6,7 @@ import {
   RemoteAudioTrack,
   AudioCaptureOptions,
   RoomOptions,
-  ConnectOptions
+  RoomConnectOptions
 } from "livekit-client";
 
 export function useLiveKit() {
@@ -20,10 +20,23 @@ export function useLiveKit() {
     try {
       setConnectionStatus("connecting");
       
-      // Get LiveKit configuration from environment variables
-      const livekitUrl = import.meta.env.VITE_LIVEKIT_URL || "wss://pied-piper-93l7cg2j.livekit.cloud";
-      const apiKey = import.meta.env.VITE_LIVEKIT_API_KEY || "API97HnKaUuDx6m";
-      const roomName = import.meta.env.VITE_LIVEKIT_ROOM_NAME || "pipey-room";
+      // Get LiveKit configuration from backend
+      const configResponse = await fetch('/api/livekit/config');
+      const config = await configResponse.json();
+      
+      // Get access token from backend
+      const tokenResponse = await fetch('/api/livekit/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!tokenResponse.ok) {
+        throw new Error('Failed to get access token from server');
+      }
+      
+      const { token, identity, roomName } = await tokenResponse.json();
       
       // Create room instance
       const room = new Room({
@@ -35,7 +48,7 @@ export function useLiveKit() {
 
       // Set up event listeners
       room.on(RoomEvent.Connected, () => {
-        console.log("Connected to LiveKit room");
+        console.log("Connected to LiveKit room:", roomName);
         setIsConnected(true);
         setConnectionStatus("connected");
       });
@@ -55,21 +68,23 @@ export function useLiveKit() {
       });
 
       room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
+        console.log("Track subscribed:", track.kind, participant.identity);
         if (track.kind === "audio") {
           const audioElement = track.attach();
           document.body.appendChild(audioElement);
         }
       });
 
-      // Generate access token (in production, this should come from your backend)
-      const token = await generateAccessToken(apiKey, roomName);
+      room.on(RoomEvent.DataReceived, (payload, participant) => {
+        console.log("Data received from agent:", new TextDecoder().decode(payload));
+      });
       
-      // Connect to room
-      await room.connect(livekitUrl, token, {
+      // Connect to room with proper token
+      await room.connect(config.url, token, {
         autoSubscribe: true,
       } as ConnectOptions);
 
-      console.log("LiveKit connection established");
+      console.log("LiveKit connection established with identity:", identity);
       
     } catch (error) {
       console.error("Failed to connect to LiveKit:", error);
@@ -178,27 +193,4 @@ export function useLiveKit() {
   };
 }
 
-// Helper function to generate access token (simplified version)
-async function generateAccessToken(apiKey: string, roomName: string): Promise<string> {
-  // In production, this should be done on your backend server
-  // For now, we'll create a simple token structure
-  // This is a simplified approach - use proper JWT signing in production
-  
-  const payload = {
-    iss: apiKey,
-    sub: `user_${Date.now()}`,
-    aud: "livekit",
-    exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour
-    room: roomName,
-    grants: {
-      room: roomName,
-      roomJoin: true,
-      canPublish: true,
-      canSubscribe: true,
-    }
-  };
 
-  // Note: This is a mock token. In production, implement proper JWT signing
-  // on your backend server using the LiveKit server SDK
-  return btoa(JSON.stringify(payload));
-}
