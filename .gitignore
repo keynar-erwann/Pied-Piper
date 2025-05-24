@@ -29,7 +29,7 @@ wheels/
 
 # Environment variables
 .env
-
+.env
 # Virtual Environment
 venv/
 ENV/
