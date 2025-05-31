@@ -1,0 +1,21 @@
+fastapi>=0.115.0
+uvicorn
+pydantic
+python-dotenv==1.0.1
+httpx==0.28.1
+requests 
+livekit-agents[openai, silero, elevenlabs,groq,anthropic]==1.0.11
+python-dotenv==1.0.1
+httpx==0.28.1
+ipython==8.13.2
+google-generativeai
+livekit-agents[google]~=1.0
+livekit-plugins-noise-cancellation~=0.2
+serpapi
+aiohttp
+sqlalchemy
+spotipy
+lyricsgenius
+reflex==0.7.8a1 
+python-multipart
+Pillow
