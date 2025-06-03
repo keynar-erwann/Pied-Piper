@@ -19,3 +19,4 @@ lyricsgenius
 reflex==0.7.8a1 
 python-multipart
 Pillow
+asyncio
