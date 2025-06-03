@@ -8,7 +8,7 @@ from livekit.agents import (
     cli,
     function_tool,
 )
-from livekit.plugins import anthropic, elevenlabs, silero, groq, anthropic
+from livekit.plugins import anthropic, elevenlabs, silero, groq
 import logging
 from dotenv import load_dotenv
 import os
