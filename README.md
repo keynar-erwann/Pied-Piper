@@ -1,6 +1,6 @@
 # 🎵 Pied Piper - AI Music Assistant
 
-Pied Piper is an intelligent, multilingual AI voice music companion that combines real-time conversation, music discovery, and YouTube integration to create an immersive musical experience. Built with LiveKit and powered by advanced AI models, Pied Piper can see, hear, and interact with you naturally while helping you discover and play music.
+Pied Piper is an intelligent, multilingual AI voice music companion that combines real-time conversation, music discovery, and YouTube integration to create an immersive musical experience. Built with LiveKit and powered by advanced AI models, Pied Piper can hear and interact with you naturally while helping you discover and play music.
 
 ## ✨ Features
 
@@ -16,10 +16,6 @@ Pied Piper is an intelligent, multilingual AI voice music companion that combine
 - **Dynamic Language Switching**: Change languages mid-conversation
 - **Localized Responses**: Native greetings and responses in each language
 
-### 👁️ Real-Time Vision
-- **Visual Music Recognition**: Identify album covers, instruments, and music-related content
-- **Live Video Analysis**: Process video streams in real-time
-- **Smart Context Awareness**: Understands what you're showing and responds accordingly
 
 ### 🧠 Intelligent Conversation
 - **Natural Language Processing**: Understands casual music requests
@@ -77,12 +73,6 @@ LIVEKIT_API_KEY=your_livekit_api_key
 LIVEKIT_API_SECRET=your_livekit_api_secret
 ```
 
-### Getting API Keys
-
-1. **SerpAPI**: Sign up at [serpapi.com](https://serpapi.com) for web search capabilities
-2. **YouTube Data API**: Enable YouTube Data API v3 in [Google Cloud Console](https://console.cloud.google.com)
-3. **Spotify API**: Create an app at [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
-
 ## 🎯 Usage Examples
 
 ### Playing Music
@@ -132,27 +122,16 @@ LIVEKIT_API_SECRET=your_livekit_api_secret
 
 ### AI Models Used
 
-- **LLM**: Google Gemini 2.0 Flash for natural language understanding
+- **LLM**: Claude 3.5 Sonnet for natural language understanding
 - **STT**: Groq Whisper Large v3 Turbo for speech recognition
 - **TTS**: ElevenLabs for natural voice synthesis
 - **VAD**: Silero for voice activity detection
 
-## 🛠️ Development
 
-### Project Structure
-```
-pied-piper/
-├── Pied_Piper.py          # Main application file
-├── requirements.txt       # Python dependencies
-├── .env.example          # Environment variables template
-├── README.md             # This file
-└── docs/                 # Additional documentation
-```
 
 ### Key Dependencies
 - `livekit-agents`: Real-time communication framework
 - `serpapi`: Web search integration
-- `spotipy`: Spotify API wrapper
 - `aiohttp`: Async HTTP client
 - `python-dotenv`: Environment variable management
 
@@ -160,8 +139,8 @@ pied-piper/
 
 1. **New Music Sources**: Extend the music tools section with additional APIs
 2. **More Languages**: Add new language codes and greetings to the language system
-3. **Enhanced Vision**: Improve visual recognition with additional AI models
-4. **Custom Commands**: Add new function tools for specific music operations
+3. **Custom Commands**: Add new function tools for specific music operations
+
 
 ## 🔧 Troubleshooting
 
@@ -179,16 +158,6 @@ pied-piper/
 **Language switching not working**
 - Confirm all required AI model APIs are properly configured
 - Check that the language code is supported (en, es, fr, de, it, hi)
-
-**Vision features not responding**
-- Ensure camera permissions are granted
-- Check that video track subscription is working in LiveKit
-
-### Performance Optimization
-
-- Adjust `vision_analysis_interval` for better performance vs. responsiveness balance
-- Cache frequently requested song information to reduce API calls
-- Monitor API rate limits across all services
 
 ## 📄 License
 

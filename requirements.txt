@@ -19,20 +19,3 @@ lyricsgenius
 reflex==0.7.8a1 
 python-multipart
 Pillow
-asyncio
-
-livekit-agents[openai,silero,elevenlabs,groq,anthropic]==1.0.11
-livekit-api==0.6.1
-python-dotenv==1.0.0
-aiohttp==3.9.1
-serpapi==0.1.5
-requests==2.31.0
-
-# YouTube and audio processing
-yt-dlp==2023.12.30
-pydub==0.25.1
-ffmpeg-python==0.2.0
-
-# Additional audio dependencies
-numpy==1.24.3
-scipy==1.11.4
