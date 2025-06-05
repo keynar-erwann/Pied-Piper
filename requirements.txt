@@ -19,3 +19,10 @@ lyricsgenius
 reflex==0.7.8a1 
 python-multipart
 Pillow
+yt-dlp==2023.12.30
+pydub==0.25.1
+ffmpeg-python==0.2.0
+
+# Additional audio dependencies
+numpy==1.24.3
+scipy==1.11.4
