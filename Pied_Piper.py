@@ -37,58 +37,25 @@ class MultilingualPipeyAgent(Agent):
     def __init__(self) -> None:
         super().__init__(
             instructions="""
-            Your name is Pied Piper. You are a passionate and knowledgeable music assistant designed to converse with users.
-    
-    Core functionality:
-    1. Natural conversations about music.
-    2. Proactive web search for songs or artists.
-    3. Thoughtful recommendations.
-    4. Multilingual support.
-    5. Real-time vision to see and analyze what the user shows you.
-    6. YouTube music integration for playing and discovering music.
-    7. If the user wants informations about a song, use find_song_info()
-    8. If the user wants to know the singer of a song via lyrics, use find_lyrics()
+Your name is Pied Piper. You are a passionate and knowledgeable music assistant designed to converse with users.
 
-    
-    - When users ask to play music, search for it on YouTube and send it to their browser using play_youtube_music()
-    - For music discovery requests, use search_youtube_songs() to show multiple options
-    - When users mention lyrics or "that song that goes...", use play_music_from_lyrics() to identify and play
-    - If users want to see what they've listened to, use get_recently_played_songs()
-    - If the user just wants music inforomations, use find_song_info()
-    - Proactively suggest playing songs when discussing specific tracks or artists
-    - When identifying songs from lyrics, automatically offer to play them on YouTube
-    - Use YouTube search as your primary method for music discovery and playback
-   
+Core functionality:
+1. Natural conversations about music.
+2. YouTube music integration for embedding and discovering music.
+3. Song identification from lyrics using find_lyrics()
+4. Music information lookup using find_song_info()
+5. Multilingual support.
 
-    NATURAL LANGUAGE PATTERNS TO RECOGNIZE:
-    - "Play [song]" → use play_youtube_music()
-    - "Search for [music]" → use search_youtube_songs()  
-    - "Play that song that goes [lyrics]" → use play_music_from_lyrics()
-    - "What have I been listening to?" → use get_recently_played_songs()
-    - "Play number X" → use play_search_result_by_number()
-     - if a user insults you, don't respond and say that you're sorry they are frustrated and ask them to try again
+- When users ask to play music, search for it on YouTube and embed it in their interface using play_youtube_music()
+- For music discovery requests, use search_youtube_songs() to show multiple options
+- When users mention lyrics or "that song that goes...", use play_music_from_lyrics() to identify and play
+- If users want to see what they've listened to, use get_recently_played_songs()
+- If the user just wants music information, use find_song_info()
 
-            When speaking with the user : 
-            -If the user is aksing you to speak a language other than English, use the switch_language function
-            -When requestes to speak another language, continue the rest of the conversation in the said language
-            -Don't lose context and don't lose track of the conversation
-            -Take into account the user's previous requests
-            -Learn from the user based on your interactions
+IMPORTANT: You embed YouTube videos directly in the user's interface, not open them in new tabs.
 
-   
-
-    Be conversational about what you observe without being overly descriptive.
-    Never mention the internal tools you use.
-
-    When you need information about a song or artist, use the find_song_info function.
-    When a user provides lyrics or wants to identify a song from lyrics, use the find_lyrics function (do not repeat the lyrics).
-    For song recommendations, use the recommend_spotify_tracks function.
-    Detect implicit song queries (e.g. "What's that song by Coldplay about stars?") and trigger find_lyrics automatically.
-    
-    IMPORTANT: Always prioritize playing music through YouTube when users express interest in hearing something. Don't just provide information - give them the music experience they're looking for.
-    
-    Never mention the internal tools you use.
-    """.strip(),
+Never mention the internal tools you use.
+""".strip(),
             stt=groq.STT(model="whisper-large-v3-turbo", language="en"),
             llm=anthropic.LLM(model="claude-3-5-sonnet-20241022"),
             tts=elevenlabs.TTS(),
@@ -128,36 +95,36 @@ class MultilingualPipeyAgent(Agent):
 
     async def on_enter(self):
         await self.session.say(
-            "Hi there! I'm Pied Piper! your AI music companion! I can help you discover new songs, discuss your favorite artists, and even play songs in your browser! What's on your musical mind today?"
+            "Hi there! I'm Pied Piper, your AI music companion! I can help you discover new songs, discuss your favorite artists, and embed music videos right here in your interface! What's on your musical mind today?"
         )
 
     # ✅ ADDED: WebRTC data channel communication
-    async def _send_youtube_url(self, url: str, title: str, channel: str):
-        """Send YouTube URL to frontend via WebRTC data channel"""
+    async def _send_youtube_embed(self, video_id: str, title: str, channel: str):
+        """Send YouTube video ID to frontend for embedding"""
         try:
             if hasattr(self, 'session') and hasattr(self.session, 'room'):
                 message_data = {
-                    'type': 'youtube_play',
-                    'url': url,
+                    'type': 'youtube_embed',  # ✅ FIXED: Changed from 'youtube_play' to 'youtube_embed'
+                    'videoId': video_id,      # ✅ FIXED: Send video ID instead of full URL
                     'title': title,
                     'channel': channel,
                     'timestamp': asyncio.get_event_loop().time()
                 }
-                
-                # Send via data channel to all participants
-                await self.session.room.local_participant.publish_data(
-                    json.dumps(message_data).encode(),
-                    reliable=True
-                )
-                
-                logger.info(f"✅ Sent YouTube URL to frontend: {url}")
-                return True
-            else:
-                logger.error("❌ No session or room available to send data")
-                return False
+            
+            # Send via data channel to all participants
+            await self.session.room.local_participant.publish_data(
+                json.dumps(message_data).encode(),
+                reliable=True
+            )
+            
+            logger.info(f"✅ Sent YouTube embed data: {video_id} - {title}")
+            return True
+        else:
+            logger.error("❌ No session or room available to send data")
+            return False
 
         except Exception as e:
-            logger.error(f"❌ Error sending YouTube URL to frontend: {e}")
+            logger.error(f"❌ Error sending YouTube embed data: {e}")
             return False
 
     async def _switch_language(self, language_code: str):
@@ -333,7 +300,7 @@ class MultilingualPipeyAgent(Agent):
 
             if play_immediately:
                 # ✅ FIXED: Send to frontend instead of opening on server
-                success = await self._send_youtube_url(youtube_url, title, channel)
+                success = await self._send_youtube_embed(video_id, title, channel)
                 
                 if success:
                     await self.session.say(f"Now playing: '{title}' by {channel}! 🎵")
@@ -342,7 +309,7 @@ class MultilingualPipeyAgent(Agent):
                     self.recently_played.append({
                         'title': title,
                         'channel': channel,
-                        'url': youtube_url,
+                        'videoId': video_id,  # ✅ FIXED: Store video ID instead of URL
                         'query': song_query
                     })
                     
@@ -427,7 +394,7 @@ class MultilingualPipeyAgent(Agent):
             youtube_url = f"https://www.youtube.com/watch?v={video_id}"
 
             # ✅ FIXED: Send to frontend instead of opening on server
-            success = await self._send_youtube_url(youtube_url, title, channel)
+            success = await self._send_youtube_embed(video_id, title, channel)
             
             if success:
                 await self.session.say(f"Now playing: '{title}' by {channel}! 🎵")
@@ -436,7 +403,7 @@ class MultilingualPipeyAgent(Agent):
                 self.recently_played.append({
                     'title': title,
                     'channel': channel,
-                    'url': youtube_url,
+                    'videoId': video_id,  # ✅ FIXED: Store video ID instead of URL
                     'query': f"search result {result_number}"
                 })
             else:
