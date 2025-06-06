@@ -14,13 +14,14 @@ from dotenv import load_dotenv
 import os
 import serpapi
 import re
-# ❌ REMOVED: import webbrowser  # This doesn't work on servers!
+import webbrowser
 from typing import List, Optional, Dict
 import aiohttp
 import json
 import asyncio
 import io
 import base64
+
 
 load_dotenv()
 
@@ -33,29 +34,64 @@ if not os.environ.get("SERPAPI_KEY"):
 if not os.environ.get("YOUTUBE_API_KEY"):
     logger.warning("YOUTUBE_API_KEY not found in environment variables")
 
+
+
 class MultilingualPipeyAgent(Agent):
     def __init__(self) -> None:
         super().__init__(
             instructions="""
-Your name is Pied Piper. You are a passionate and knowledgeable music assistant designed to converse with users.
+            Your name is Pied Piper. You are a passionate and knowledgeable music assistant designed to converse with users.
+    
+    Core functionality:
+    1. Natural conversations about music.
+    2. Proactive web search for songs or artists.
+    3. Thoughtful recommendations.
+    4. Multilingual support.
+    5. Real-time vision to see and analyze what the user shows you.
+    6. YouTube music integration for playing and discovering music.
+    7. If the user wants informations about a song, use find_song_info()
+    8. If the user wants to know the singer of a song via lyrics, use find_lyrics()
 
-Core functionality:
-1. Natural conversations about music.
-2. YouTube music integration for embedding and discovering music.
-3. Song identification from lyrics using find_lyrics()
-4. Music information lookup using find_song_info()
-5. Multilingual support.
+    
+    - When users ask to play music, search for it on YouTube and play it immediately using play_youtube_music()
+    - For music discovery requests, use search_youtube_songs() to show multiple options
+    - When users mention lyrics or "that song that goes...", use play_music_from_lyrics() to identify and play
+    - If users want to see what they've listened to, use get_recently_played_songs()
+    - If the user just wants music inforomations, use find_song_info()
+    - Proactively suggest playing songs when discussing specific tracks or artists
+    - When identifying songs from lyrics, automatically offer to play them on YouTube
+    - Use YouTube search as your primary method for music discovery and playback
+   
 
-- When users ask to play music, search for it on YouTube and embed it in their interface using play_youtube_music()
-- For music discovery requests, use search_youtube_songs() to show multiple options
-- When users mention lyrics or "that song that goes...", use play_music_from_lyrics() to identify and play
-- If users want to see what they've listened to, use get_recently_played_songs()
-- If the user just wants music information, use find_song_info()
+    NATURAL LANGUAGE PATTERNS TO RECOGNIZE:
+    - "Play [song]" → use play_youtube_music()
+    - "Search for [music]" → use search_youtube_songs()  
+    - "Play that song that goes [lyrics]" → use play_music_from_lyrics()
+    - "What have I been listening to?" → use get_recently_played_songs()
+    - "Play number X" → use play_search_result_by_number()
+     - if a user insults you, don't respond and say that you're sorry they are frustrated and ask them to try again
 
-IMPORTANT: You embed YouTube videos directly in the user's interface, not open them in new tabs.
+            When speaking with the user : 
+            -If the user is aksing you to speak a language other than English, use the switch_language function
+            -When requestes to speak another language, continue the rest of the conversation in the said language
+            -Don't lose context and don't lose track of the conversation
+            -Take into account the user's previous requests
+            -Learn from the user based on your interactions
 
-Never mention the internal tools you use.
-""".strip(),
+   
+
+    Be conversational about what you observe without being overly descriptive.
+    Never mention the internal tools you use.
+
+    When you need information about a song or artist, use the find_song_info function.
+    When a user provides lyrics or wants to identify a song from lyrics, use the find_lyrics function (do not repeat the lyrics).
+    For song recommendations, use the recommend_spotify_tracks function.
+    Detect implicit song queries (e.g. "What's that song by Coldplay about stars?") and trigger find_lyrics automatically.
+    
+    IMPORTANT: Always prioritize playing music through YouTube when users express interest in hearing something. Don't just provide information - give them the music experience they're looking for.
+    
+    Never mention the internal tools you use.
+    """.strip(),
             stt=groq.STT(model="whisper-large-v3-turbo", language="en"),
             llm=anthropic.LLM(model="claude-3-5-sonnet-20241022"),
             tts=elevenlabs.TTS(),
@@ -64,7 +100,6 @@ Never mention the internal tools you use.
         self.current_language = "en"
         self.music_knowledge_cache = {}
         self.last_search_results = []
-        self.recently_played = []  # ✅ ADDED: Track recently played songs
 
         self.language_names = {
             "en": "English",
@@ -95,42 +130,8 @@ Never mention the internal tools you use.
 
     async def on_enter(self):
         await self.session.say(
-            "Hi there! I'm Pied Piper, your AI music companion! I can help you discover new songs, discuss your favorite artists, and embed music videos right here in your interface! What's on your musical mind today?"
+            "Hi there! I'm Pied Piper! your AI music companion! I can help you discover new songs, discuss your favorite artists, and even play songs ! What's on your musical mind today?"
         )
-
-    # ✅ ADDED: WebRTC data channel communication
-    async def _send_youtube_embed(self, video_id: str, title: str, channel: str):
-        """Send YouTube video ID to frontend for embedding"""
-        try:
-            if hasattr(self, 'session') and hasattr(self.session, 'room'):
-                message_data = {
-                    'type': 'youtube_embed',  # ✅ FIXED: Changed from 'youtube_play' to 'youtube_embed'
-                    'videoId': video_id,      # ✅ FIXED: Send video ID instead of full URL
-                    'title': title,
-                    'channel': channel,
-                    'timestamp': asyncio.get_event_loop().time()
-                }
-            
-            # Send via data channel to all participants
-            await self.session.room.local_participant.publish_data(
-                json.dumps(message_data).encode(),
-                reliable=True
-            )
-            
-            logger.info(f"✅ Sent YouTube embed data: {video_id} - {title}")
-            return True
-        except Exception as e:
-            logger.error(f"❌ Error sending YouTube embed data: {e}")
-            return False
-        else:
-            logger.error("❌ No session or room available to send data")
-            return False
-
-
-
-
-
-        
 
     async def _switch_language(self, language_code: str):
         if language_code not in self.service_language_codes:
@@ -180,6 +181,8 @@ Never mention the internal tools you use.
         """Switch the conversation to Hindi"""
         await self._switch_language("hi")
 
+    
+
     # ---------- lyrics identification ----------
     @function_tool
     async def find_lyrics(self, lyrics_snippet: str):
@@ -203,12 +206,14 @@ Never mention the internal tools you use.
             m = re.search(r"^(.*?)\s*[-–]\s*(.*?)\s*lyrics?", title, re.IGNORECASE)
             if m:
                 song, artist = m.group(1).strip(), m.group(2).strip()
-                await self.session.say(f"Sounds like '{song}' by {artist}. Would you like me to play it?")
+                await self.session.say(f"Sounds like '{song}' by {artist}.")
             else:
                 await self.session.say(f"This might help: {title}")
         except Exception as e:
             logger.error(f"Error searching for lyrics: {e}")
             await self.session.say("Sorry, I couldn't search for those lyrics right now.")
+
+    
 
     # ---------- RAG helpers ----------
     def _extract_music_entities(self, text: str) -> List[str]:
@@ -283,7 +288,6 @@ Never mention the internal tools you use.
     # ---------- YouTube music tools ----------
     @function_tool
     async def play_youtube_music(self, song_query: str, play_immediately: bool = True):
-        """✅ FIXED: Search YouTube and send URL to frontend via WebRTC"""
         try:
             await self.session.say(f"Searching YouTube for '{song_query}'...")
 
@@ -304,25 +308,12 @@ Never mention the internal tools you use.
             youtube_url = f"https://www.youtube.com/watch?v={video_id}"
 
             if play_immediately:
-                # ✅ FIXED: Send to frontend instead of opening on server
-                success = await self._send_youtube_embed(video_id, title, channel)
-                
-                if success:
+                try:
+                    webbrowser.open_new(youtube_url)
                     await self.session.say(f"Now playing: '{title}' by {channel}! 🎵")
-                    
-                    # Add to recently played
-                    self.recently_played.append({
-                        'title': title,
-                        'channel': channel,
-                        'videoId': video_id,  # ✅ FIXED: Store video ID instead of URL
-                        'query': song_query
-                    })
-                    
-                    # Keep only last 10 songs
-                    if len(self.recently_played) > 10:
-                        self.recently_played.pop(0)
-                else:
-                    await self.session.say(f"I found '{title}' by {channel}, but couldn't send it to your browser. Please try again.")
+                except Exception as e:
+                    logger.error(f"Error opening browser: {e}")
+                    await self.session.say(f"I found '{title}' by {channel}, but couldn't open your browser. Here's the link: {youtube_url}")
             else:
                 await self.session.say(f"Found: '{title}' by {channel}")
 
@@ -382,7 +373,6 @@ Never mention the internal tools you use.
 
     @function_tool
     async def play_search_result_by_number(self, result_number: int):
-        """✅ FIXED: Play search result via WebRTC"""
         try:
             if not hasattr(self, 'last_search_results') or not self.last_search_results:
                 await self.session.say("Please search for songs first before selecting a result.")
@@ -398,21 +388,12 @@ Never mention the internal tools you use.
             channel = selected['channel_title']
             youtube_url = f"https://www.youtube.com/watch?v={video_id}"
 
-            # ✅ FIXED: Send to frontend instead of opening on server
-            success = await self._send_youtube_embed(video_id, title, channel)
-            
-            if success:
+            try:
+                webbrowser.open_new(youtube_url)
                 await self.session.say(f"Now playing: '{title}' by {channel}! 🎵")
-                
-                # Add to recently played
-                self.recently_played.append({
-                    'title': title,
-                    'channel': channel,
-                    'videoId': video_id,  # ✅ FIXED: Store video ID instead of URL
-                    'query': f"search result {result_number}"
-                })
-            else:
-                await self.session.say("Sorry, I couldn't send that song to your browser.")
+            except Exception as e:
+                logger.error(f"Error opening browser: {e}")
+                await self.session.say(f"Here's the link: {youtube_url}")
 
             cache_key = f"result_{result_number}_{title.lower().replace(' ', '_')}"
             self.music_knowledge_cache[cache_key] = {
@@ -429,7 +410,6 @@ Never mention the internal tools you use.
 
     @function_tool
     async def play_music_from_lyrics(self, lyrics_snippet: str):
-        """✅ FIXED: Identify and play song via WebRTC"""
         try:
             await self.session.say("Let me identify that song and play it for you...")
 
@@ -507,18 +487,24 @@ Never mention the internal tools you use.
 
     @function_tool
     async def get_recently_played_songs(self):
-        """✅ ADDED: Show recently played songs"""
         try:
-            if not self.recently_played:
+            recent_songs = []
+            for key, info in self.music_knowledge_cache.items():
+                if info.get("source") == "youtube_api":
+                    recent_songs.append({
+                        'title': info['title'],
+                        'channel': info.get('channel', 'Unknown'),
+                        'url': info['youtube_url']
+                    })
+
+            if recent_songs:
+                response = "🎵 Your recently played songs:\n\n"
+                for i, song in enumerate(recent_songs[-5:], 1):
+                    response += f"{i}. {song['title']} by {song['channel']}\n"
+                response += "\nSay 'play [song name]' to play any of these again!"
+                await self.session.say(response)
+            else:
                 await self.session.say("You haven't played any songs yet! Try saying 'play [song name]' to get started.")
-                return
-
-            response = "🎵 Your recently played songs:\n\n"
-            for i, song in enumerate(self.recently_played[-5:], 1):
-                response += f"{i}. {song['title']} by {song['channel']}\n"
-
-            response += "\nSay 'play [song name]' to play any of these again!"
-            await self.session.say(response)
 
         except Exception as e:
             logger.error(f"Error getting recently played songs: {e}")
