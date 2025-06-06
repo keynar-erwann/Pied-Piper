@@ -1057,6 +1057,36 @@ async def _extract_trivia_facts(self, results: list, song_name: str):
     
     return facts[:10]  # Return top 10 facts per result set
 
+async def _send_youtube_embed(self, video_id: str, title: str, channel: str):
+        """Send YouTube video ID to frontend for embedding"""
+        try:
+            if hasattr(self, 'session') and hasattr(self.session, 'room'):
+                message_data = {
+                    'type': 'youtube_embed',
+                    'videoId': video_id,
+                    'title': title,
+                    'channel': channel,
+                    'timestamp': asyncio.get_event_loop().time()
+                }
+            
+                # Send via data channel to all participants
+                await self.session.room.local_participant.publish_data(
+                    json.dumps(message_data).encode(),
+                    reliable=True
+                )
+                
+                logger.info(f"✅ Sent YouTube embed data: {video_id} - ${title}")
+                return True
+            else:
+                logger.error("❌ No session or room available to send data")
+                return False
+
+        except Exception as e:
+            logger.error(f"❌ Error sending YouTube embed data: {e}")
+            return False
+
+
+
 
 # Enhanced version of the main find_song_info to better handle interesting facts
 async def _extract_enhanced_facts(self, text: str, song_info: dict):
