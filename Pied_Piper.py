@@ -130,7 +130,7 @@ class MultilingualPipeyAgent(Agent):
 
     async def on_enter(self):
         await self.session.say(
-            "Hi there! I'm Pied Piper! your AI music companion! I can help you discover new songs, discuss your favorite artists, and even play songs ! What's on your musical mind today?"
+            "Hi there! I'm Pied Piper! your AI music companion! I can help you discover new songs, discuss your favorite artists, and even play songs ! What's on your musical mind today ?"
         )
 
     async def _switch_language(self, language_code: str):
