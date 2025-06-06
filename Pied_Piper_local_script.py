@@ -14,13 +14,14 @@ from dotenv import load_dotenv
 import os
 import serpapi
 import re
-# ❌ REMOVED: import webbrowser  # This doesn't work on servers!
+import webbrowser
 from typing import List, Optional, Dict
 import aiohttp
 import json
 import asyncio
 import io
 import base64
+
 
 load_dotenv()
 
@@ -32,6 +33,8 @@ if not os.environ.get("SERPAPI_KEY"):
 
 if not os.environ.get("YOUTUBE_API_KEY"):
     logger.warning("YOUTUBE_API_KEY not found in environment variables")
+
+
 
 class MultilingualPipeyAgent(Agent):
     def __init__(self) -> None:
@@ -50,7 +53,7 @@ class MultilingualPipeyAgent(Agent):
     8. If the user wants to know the singer of a song via lyrics, use find_lyrics()
 
     
-    - When users ask to play music, search for it on YouTube and send it to their browser using play_youtube_music()
+    - When users ask to play music, search for it on YouTube and play it immediately using play_youtube_music()
     - For music discovery requests, use search_youtube_songs() to show multiple options
     - When users mention lyrics or "that song that goes...", use play_music_from_lyrics() to identify and play
     - If users want to see what they've listened to, use get_recently_played_songs()
@@ -97,7 +100,6 @@ class MultilingualPipeyAgent(Agent):
         self.current_language = "en"
         self.music_knowledge_cache = {}
         self.last_search_results = []
-        self.recently_played = []  # ✅ ADDED: Track recently played songs
 
         self.language_names = {
             "en": "English",
@@ -128,37 +130,8 @@ class MultilingualPipeyAgent(Agent):
 
     async def on_enter(self):
         await self.session.say(
-            "Hi there! I'm Pied Piper! your AI music companion! I can help you discover new songs, discuss your favorite artists, and even play songs in your browser! What's on your musical mind today?"
+            "Hi there! I'm Pied Piper! your AI music companion! I can help you discover new songs, discuss your favorite artists, and even play songs ! What's on your musical mind today?"
         )
-
-    # ✅ ADDED: WebRTC data channel communication
-    async def _send_youtube_url(self, url: str, title: str, channel: str):
-        """Send YouTube URL to frontend via WebRTC data channel"""
-        try:
-            if hasattr(self, 'session') and hasattr(self.session, 'room'):
-                message_data = {
-                    'type': 'youtube_play',
-                    'url': url,
-                    'title': title,
-                    'channel': channel,
-                    'timestamp': asyncio.get_event_loop().time()
-                }
-                
-                # Send via data channel to all participants
-                await self.session.room.local_participant.publish_data(
-                    json.dumps(message_data).encode(),
-                    reliable=True
-                )
-                
-                logger.info(f"✅ Sent YouTube URL to frontend: {url}")
-                return True
-            else:
-                logger.error("❌ No session or room available to send data")
-                return False
-
-        except Exception as e:
-            logger.error(f"❌ Error sending YouTube URL to frontend: {e}")
-            return False
 
     async def _switch_language(self, language_code: str):
         if language_code not in self.service_language_codes:
@@ -208,6 +181,8 @@ class MultilingualPipeyAgent(Agent):
         """Switch the conversation to Hindi"""
         await self._switch_language("hi")
 
+    
+
     # ---------- lyrics identification ----------
     @function_tool
     async def find_lyrics(self, lyrics_snippet: str):
@@ -231,12 +206,14 @@ class MultilingualPipeyAgent(Agent):
             m = re.search(r"^(.*?)\s*[-–]\s*(.*?)\s*lyrics?", title, re.IGNORECASE)
             if m:
                 song, artist = m.group(1).strip(), m.group(2).strip()
-                await self.session.say(f"Sounds like '{song}' by {artist}. Would you like me to play it?")
+                await self.session.say(f"Sounds like '{song}' by {artist}.")
             else:
                 await self.session.say(f"This might help: {title}")
         except Exception as e:
             logger.error(f"Error searching for lyrics: {e}")
             await self.session.say("Sorry, I couldn't search for those lyrics right now.")
+
+    
 
     # ---------- RAG helpers ----------
     def _extract_music_entities(self, text: str) -> List[str]:
@@ -311,7 +288,6 @@ class MultilingualPipeyAgent(Agent):
     # ---------- YouTube music tools ----------
     @function_tool
     async def play_youtube_music(self, song_query: str, play_immediately: bool = True):
-        """✅ FIXED: Search YouTube and send URL to frontend via WebRTC"""
         try:
             await self.session.say(f"Searching YouTube for '{song_query}'...")
 
@@ -332,25 +308,12 @@ class MultilingualPipeyAgent(Agent):
             youtube_url = f"https://www.youtube.com/watch?v={video_id}"
 
             if play_immediately:
-                # ✅ FIXED: Send to frontend instead of opening on server
-                success = await self._send_youtube_url(youtube_url, title, channel)
-                
-                if success:
+                try:
+                    webbrowser.open_new(youtube_url)
                     await self.session.say(f"Now playing: '{title}' by {channel}! 🎵")
-                    
-                    # Add to recently played
-                    self.recently_played.append({
-                        'title': title,
-                        'channel': channel,
-                        'url': youtube_url,
-                        'query': song_query
-                    })
-                    
-                    # Keep only last 10 songs
-                    if len(self.recently_played) > 10:
-                        self.recently_played.pop(0)
-                else:
-                    await self.session.say(f"I found '{title}' by {channel}, but couldn't send it to your browser. Please try again.")
+                except Exception as e:
+                    logger.error(f"Error opening browser: {e}")
+                    await self.session.say(f"I found '{title}' by {channel}, but couldn't open your browser. Here's the link: {youtube_url}")
             else:
                 await self.session.say(f"Found: '{title}' by {channel}")
 
@@ -410,7 +373,6 @@ class MultilingualPipeyAgent(Agent):
 
     @function_tool
     async def play_search_result_by_number(self, result_number: int):
-        """✅ FIXED: Play search result via WebRTC"""
         try:
             if not hasattr(self, 'last_search_results') or not self.last_search_results:
                 await self.session.say("Please search for songs first before selecting a result.")
@@ -426,21 +388,12 @@ class MultilingualPipeyAgent(Agent):
             channel = selected['channel_title']
             youtube_url = f"https://www.youtube.com/watch?v={video_id}"
 
-            # ✅ FIXED: Send to frontend instead of opening on server
-            success = await self._send_youtube_url(youtube_url, title, channel)
-            
-            if success:
+            try:
+                webbrowser.open_new(youtube_url)
                 await self.session.say(f"Now playing: '{title}' by {channel}! 🎵")
-                
-                # Add to recently played
-                self.recently_played.append({
-                    'title': title,
-                    'channel': channel,
-                    'url': youtube_url,
-                    'query': f"search result {result_number}"
-                })
-            else:
-                await self.session.say("Sorry, I couldn't send that song to your browser.")
+            except Exception as e:
+                logger.error(f"Error opening browser: {e}")
+                await self.session.say(f"Here's the link: {youtube_url}")
 
             cache_key = f"result_{result_number}_{title.lower().replace(' ', '_')}"
             self.music_knowledge_cache[cache_key] = {
@@ -457,7 +410,6 @@ class MultilingualPipeyAgent(Agent):
 
     @function_tool
     async def play_music_from_lyrics(self, lyrics_snippet: str):
-        """✅ FIXED: Identify and play song via WebRTC"""
         try:
             await self.session.say("Let me identify that song and play it for you...")
 
@@ -535,18 +487,24 @@ class MultilingualPipeyAgent(Agent):
 
     @function_tool
     async def get_recently_played_songs(self):
-        """✅ ADDED: Show recently played songs"""
         try:
-            if not self.recently_played:
+            recent_songs = []
+            for key, info in self.music_knowledge_cache.items():
+                if info.get("source") == "youtube_api":
+                    recent_songs.append({
+                        'title': info['title'],
+                        'channel': info.get('channel', 'Unknown'),
+                        'url': info['youtube_url']
+                    })
+
+            if recent_songs:
+                response = "🎵 Your recently played songs:\n\n"
+                for i, song in enumerate(recent_songs[-5:], 1):
+                    response += f"{i}. {song['title']} by {song['channel']}\n"
+                response += "\nSay 'play [song name]' to play any of these again!"
+                await self.session.say(response)
+            else:
                 await self.session.say("You haven't played any songs yet! Try saying 'play [song name]' to get started.")
-                return
-
-            response = "🎵 Your recently played songs:\n\n"
-            for i, song in enumerate(self.recently_played[-5:], 1):
-                response += f"{i}. {song['title']} by {song['channel']}\n"
-
-            response += "\nSay 'play [song name]' to play any of these again!"
-            await self.session.say(response)
 
         except Exception as e:
             logger.error(f"Error getting recently played songs: {e}")
