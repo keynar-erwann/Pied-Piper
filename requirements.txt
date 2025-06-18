@@ -1,28 +1,24 @@
-fastapi>=0.115.0
+fastapi
 uvicorn
 pydantic
-python-dotenv==1.0.1
-httpx==0.28.1
+python-dotenv
+httpx
 requests 
-livekit-agents[openai, silero, elevenlabs,groq,anthropic]==1.0.11
-python-dotenv==1.0.1
-httpx==0.28.1
-ipython==8.13.2
+livekit-agents[openai, silero, elevenlabs,groq,anthropic,google]
+python-dotenv
+httpx
+ipython
 google-generativeai
-livekit-agents[google]~=1.0
-livekit-plugins-noise-cancellation~=0.2
+livekit-agents[google]
+livekit-plugins-noise-cancellation
 serpapi
 aiohttp
 sqlalchemy
 spotipy
 lyricsgenius
-reflex==0.7.8a1 
+
 python-multipart
 Pillow
-yt-dlp==2023.12.30
-pydub==0.25.1
-ffmpeg-python==0.2.0
+yt-dlp0
 
-# Additional audio dependencies
-numpy==1.26.0
-scipy==1.11.4
+
