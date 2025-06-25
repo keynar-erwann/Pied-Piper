@@ -56,7 +56,7 @@ class MusicDebateContext:
     user_position: str
     evidence_presented: List[str]
     counterarguments: List[str]
-    debate_stage: str  # "opening", "evidence", "rebuttal", "conclusion"
+    debate_stage: str 
 
 @dataclass
 class LifeEvent:
