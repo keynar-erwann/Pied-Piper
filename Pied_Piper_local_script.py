@@ -2292,7 +2292,7 @@ async def quick_song_lookup(self, query: str):
 
 async def entrypoint(ctx: JobContext):
     await ctx.connect()
-    session = AgentSession(allow_interruptions=True)
+    session = AgentSession(allow_interruptions=False)
     await session.start(
     agent=MultilingualPipeyAgent(), 
     room=ctx.room,
