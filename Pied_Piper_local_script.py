@@ -7,6 +7,7 @@ from livekit.agents import (
     WorkerOptions,
     cli,
     function_tool,
+    RoomInputOptions,
 )
 from livekit.plugins import anthropic, elevenlabs, silero, groq
 import logging
@@ -2146,21 +2147,21 @@ async def _extract_enhanced_facts(self, text: str, song_info: dict):
                 if len(fact.strip()) > 5:
                     interesting_facts.append(fact.strip())
         
-        # Combine and deduplicate facts
+        
         if interesting_facts:
             unique_facts = list(dict.fromkeys(interesting_facts))
-            song_info['interesting_facts'] = ' | '.join(unique_facts[:3])  # Top 3 facts
-            song_info['all_trivia'] = unique_facts  # Store all for trivia function
+            song_info['interesting_facts'] = ' | '.join(unique_facts[:3]) 
+            song_info['all_trivia'] = unique_facts  
             
     except Exception as e:
         logger.warning(f"Error in enhanced fact extraction: {e}")
 
 
-# Additional helper function for quick song info lookup
+
 @function_tool
 async def quick_song_lookup(self, query: str):
     """Quick lookup for when users ask casual questions about songs"""
-    # Parse the query to extract song and artist
+    
     song_patterns = [
         r'(?:what about|tell me about|info on) ["\']([^"\']+)["\'](?:\s+by\s+([^?\n]+))?',
         r'["\']([^"\']+)["\'](?:\s+by\s+([^?\n]+))?',
@@ -2288,11 +2289,15 @@ async def quick_song_lookup(self, query: str):
             logger.error(f"Error in handle_message: {e}")
 
     
-# ---------- entrypoint ----------
+
 async def entrypoint(ctx: JobContext):
     await ctx.connect()
     session = AgentSession(allow_interruptions=True)
-    await session.start(agent=MultilingualPipeyAgent(), room=ctx.room)
+    await session.start(
+    agent=MultilingualPipeyAgent(), 
+    room=ctx.room,
+    room_input_options=RoomInputOptions(video_enabled=True))
+
 
 if __name__ == "__main__":
     cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint))
