@@ -19,6 +19,6 @@ lyricsgenius
 
 python-multipart
 Pillow
-yt-dlp0
+
 
 
